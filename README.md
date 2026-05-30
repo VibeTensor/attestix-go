@@ -10,6 +10,11 @@ Python core. Verify Ed25519 W3C Verifiable Credentials, `did:key` identities, an
 UCAN delegation chains anywhere Go runs: agent runtimes, MCP servers, Kubernetes
 admission controllers, CLIs.
 
+This port is **verifier-only**: it verifies credentials and delegation chains;
+it does not issue them. Issuance stays in the
+[Attestix Python core](https://github.com/VibeTensor/attestix) (`pip install attestix`)
+or Attestix Cloud.
+
 This port is validated, byte-for-byte, against the shared cross-language
 conformance vectors (`spec/verify/v1/vectors.json` in the core repo, vendored
 here as [`testdata/vectors.json`](testdata/vectors.json)). All vectors pass.
