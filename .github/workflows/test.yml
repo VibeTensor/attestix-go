@@ -1,0 +1,40 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.21', '1.22', '1.23']
+    steps:
+      # actions/checkout@v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      # actions/setup-go@v5.2.0
+      - uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a
+        with:
+          go-version: ${{ matrix.go }}
+          check-latest: true
+      - name: Verify formatting
+        run: |
+          fmtout="$(gofmt -l .)"
+          if [ -n "$fmtout" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$fmtout"
+            exit 1
+          fi
+      - name: Vet
+        run: go vet ./...
+      - name: Build
+        run: go build ./...
+      - name: Test (conformance vectors + units)
+        run: go test -v -race ./...
