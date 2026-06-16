@@ -4,7 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/VibeTensor/attestix-go.svg)](https://pkg.go.dev/github.com/VibeTensor/attestix-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/VibeTensor/attestix-go)](https://goreportcard.com/report/github.com/VibeTensor/attestix-go)
 
-Offline verifier — in pure Go, no Python runtime, no network — for credentials
+Offline verifier (pure Go, no Python runtime, no network) for credentials
 and delegations issued by the [Attestix](https://github.com/VibeTensor/attestix)
 Python core. Verify Ed25519 W3C Verifiable Credentials, `did:key` identities, and
 UCAN delegation chains anywhere Go runs: agent runtimes, MCP servers, Kubernetes
@@ -48,7 +48,7 @@ func main() {
 ```
 
 `Verify()` is the AND of `SignatureValid`, `NotExpired`, and `NotRevoked`
-(plus a structural check) — exactly the reference verdict.
+(plus a structural check), exactly the reference verdict.
 
 ## API
 
@@ -80,7 +80,7 @@ practical JCS subset that differs from RFC 8785 in two load-bearing ways:
 
 Otherwise: keys sorted by Unicode code point, separators `","` / `":"` with no
 whitespace, raw UTF-8 output (no `\uXXXX` escapes). `Canonicalize` reproduces
-this exactly — see [`canonical.go`](canonical.go) and the `canon-001` vector.
+this exactly: see [`canonical.go`](canonical.go) and the `canon-001` vector.
 
 Other contract details mirrored here: VC signatures cover every top-level field
 **except** `proof` and `credentialStatus`; `proofValue` is base64url **with**
@@ -103,8 +103,8 @@ go test ./...
 ```
 
 The suite loads `testdata/vectors.json` and asserts every conformance vector
-(canonicalization byte-match, did:key decode, VC verify — valid / tampered /
-expired, and UCAN chain — valid attenuation / escalation).
+(canonicalization byte-match, did:key decode, VC verify: valid / tampered /
+expired, and UCAN chain: valid attenuation / escalation).
 
 ## License
 
