@@ -22,7 +22,7 @@ here as [`testdata/vectors.json`](testdata/vectors.json)). All vectors pass.
 ## Install
 
 ```sh
-go get github.com/VibeTensor/attestix-go@v0.4.0
+go get github.com/VibeTensor/attestix-go@v0.4.1
 ```
 
 ```go

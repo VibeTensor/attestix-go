@@ -3,25 +3,29 @@ package attestix_test
 import (
 	"fmt"
 	"os"
+	"testing"
 
 	attestix "github.com/VibeTensor/attestix-go"
 )
 
-// ExampleVerifyCredential shows the 10-line offline verification of a W3C VC
-// issued by the Attestix Python core. No network, no Python runtime.
-func ExampleVerifyCredential() {
+// TestVerifyCredentialExample exercises the 10-line offline verification of a
+// W3C VC issued by the Attestix Python core. No network, no Python runtime.
+//
+// It asserts only that parsing/verification returns without error and yields a
+// usable result. It does NOT assert Verify()==true: the sample VC may carry an
+// expirationDate in the past under wall-clock, which is a valid verification
+// outcome (NotExpired=false), not a parse failure.
+func TestVerifyCredentialExample(t *testing.T) {
 	vc, err := os.ReadFile("testdata/sample-vc.json")
 	if err != nil {
-		fmt.Println("read:", err)
-		return
+		t.Fatalf("read sample-vc.json: %v", err)
 	}
 	res, err := attestix.VerifyCredential(vc)
 	if err != nil {
-		fmt.Println("verify:", err)
-		return
+		t.Fatalf("VerifyCredential: %v", err)
 	}
-	fmt.Printf("signature=%v expired=%v revoked=%v verify=%v\n",
-		res.SignatureValid, !res.NotExpired, !res.NotRevoked, res.Verify())
+	// Verify() must be callable on the returned result without panicking.
+	_ = res.Verify()
 }
 
 // ExampleDecodeDidKey resolves an Ed25519 public key from a did:key.

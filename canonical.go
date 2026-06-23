@@ -17,7 +17,7 @@ import (
 //
 // This is NOT strict RFC 8785. It reproduces, byte-for-byte, the output of the
 // reference implementation attestix/auth/crypto.py::canonicalize_json (attestix
-// 0.4.0). The rules:
+// 0.4.x). The rules:
 //
 //  1. Every string VALUE and every object KEY is NFC-normalized.
 //  2. Object keys are sorted ascending by Unicode code point.
