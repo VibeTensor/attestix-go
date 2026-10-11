@@ -21,6 +21,8 @@ here as [`testdata/vectors.json`](testdata/vectors.json)). All vectors pass.
 
 ## Install
 
+Requires Go 1.25 or later for the security-maintained Unicode dependency.
+
 ```sh
 go get github.com/VibeTensor/attestix-go@v0.4.1
 ```
@@ -64,7 +66,7 @@ func main() {
 | `Canonicalize(raw []byte) ([]byte, error)` | The Attestix JCS-style canonical UTF-8 bytes (the signed form). |
 | `DecodeDidKey(did string) (ed25519.PublicKey, error)` | Decode an Ed25519 `did:key` to its raw 32-byte public key. |
 | `EncodeDidKey` / `VerificationMethod` / `DidKeyMultibase` | did:key helpers. |
-| `VerifyDelegationChain(child, parent string, childAtt, parentAtt []string, pub) (DelegationResult, error)` | Verify a UCAN parent→child delegation: EdDSA signatures + capability attenuation. |
+| `VerifyDelegationChain(child, parent string, childAtt, parentAtt []string, pub) (DelegationResult, error)` | Verify a UCAN parent to child delegation: EdDSA signatures + capability attenuation. |
 | `VerifyChainFull(token, pub, now)` | Recursive `prf` chain verification (signature + expiry + cycle detection + attenuation). |
 | `VerifyToken(token, pub)` | Verify a single UCAN EdDSA JWT (rejects `alg:none`). |
 
@@ -78,7 +80,7 @@ practical JCS subset that differs from RFC 8785 in two load-bearing ways:
    object key. RFC 8785 explicitly does *not* normalize. (This port uses
    `golang.org/x/text/unicode/norm`.)
 2. **Number formatting follows Python `json.dumps`**: whole-number floats
-   collapse to integers (`1.0` → `1`), integers are preserved at arbitrary
+   collapse to integers (`1.0`  to  `1`), integers are preserved at arbitrary
    precision (e.g. `9007199254740993`, beyond 2^53, is emitted verbatim), and
    non-whole floats keep their literal form. Signed payloads should avoid
    non-trivial floats; the vectors only use integers and `1.5`.
@@ -89,7 +91,7 @@ this exactly: see [`canonical.go`](canonical.go) and the `canon-001` vector.
 
 Other contract details mirrored here: VC signatures cover every top-level field
 **except** `proof` and `credentialStatus`; `proofValue` is base64url **with**
-padding; `did:key` is `did:key:z` + base58btc(`0xed01` ‖ 32-byte key); UCAN
+padding; `did:key` is `did:key:z` + base58btc(`0xed01` || 32-byte key); UCAN
 tokens are EdDSA JWTs whose signed message is the compact
 `base64url(header).base64url(payload)` (base64url **without** padding), with
 `alg:none` rejected and child capabilities required to be a subset of the
@@ -113,4 +115,4 @@ expired, and UCAN chain: valid attenuation / escalation).
 
 ## License
 
-[Apache-2.0](LICENSE) © 2026 VibeTensor
+[Apache-2.0](LICENSE) (c) 2026 VibeTensor
