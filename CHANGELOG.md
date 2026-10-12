@@ -1,9 +1,8 @@
 # Changelog
 
-## Unreleased
+## [0.4.2] - 2026-10-12
 
-This section describes changes present on main. It does not announce a module
-release or imply that an existing tag contains them.
+Includes the verification fixes merged after v0.4.1.
 
 ### Verification
 
