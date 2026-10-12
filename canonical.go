@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math"
 	"math/big"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -34,6 +37,10 @@ func Canonicalize(raw []byte) ([]byte, error) {
 	var v interface{}
 	if err := dec.Decode(&v); err != nil {
 		return nil, err
+	}
+	var trailing interface{}
+	if err := dec.Decode(&trailing); err != io.EOF {
+		return nil, fmt.Errorf("attestix: trailing JSON content")
 	}
 	var buf bytes.Buffer
 	if err := writeCanonical(&buf, v); err != nil {
@@ -70,6 +77,9 @@ func writeCanonical(buf *bytes.Buffer, v interface{}) error {
 	case json.Number:
 		return writeNumber(buf, t)
 	case float64:
+		if math.IsNaN(t) || math.IsInf(t, 0) {
+			return fmt.Errorf("attestix: non-finite number")
+		}
 		// Should not occur when UseNumber is set, but handle defensively.
 		return writeNumber(buf, json.Number(strconvFloat(t)))
 	case map[string]interface{}:
@@ -90,8 +100,14 @@ func writeObject(buf *bytes.Buffer, m map[string]interface{}) error {
 		val interface{}
 	}
 	pairs := make([]kv, 0, len(m))
+	seen := make(map[string]bool, len(m))
 	for k, val := range m {
-		pairs = append(pairs, kv{key: norm.NFC.String(k), val: val})
+		key := norm.NFC.String(k)
+		if seen[key] {
+			return fmt.Errorf("attestix: duplicate normalized object key")
+		}
+		seen[key] = true
+		pairs = append(pairs, kv{key: key, val: val})
 	}
 	sort.Slice(pairs, func(i, j int) bool {
 		return codepointLess(pairs[i].key, pairs[j].key)
@@ -139,6 +155,10 @@ func writeNumber(buf *bytes.Buffer, n json.Number) error {
 		}
 		buf.WriteString(s)
 		return nil
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil || math.IsNaN(f) || math.IsInf(f, 0) {
+		return fmt.Errorf("attestix: unsupported float magnitude")
 	}
 	// Float literal. Collapse to int if it is a whole number (matches Python's
 	// "1.0 -> 1"). Use big.Float to avoid float64 precision artefacts and to

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 )
@@ -73,6 +74,10 @@ func decodeOrdered(raw []byte) (map[string]interface{}, error) {
 	if err := dec.Decode(&v); err != nil {
 		return nil, err
 	}
+	var trailing interface{}
+	if err := dec.Decode(&trailing); err != io.EOF {
+		return nil, fmt.Errorf("attestix: trailing JSON content")
+	}
 	m, ok := v.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("attestix: credential must be a JSON object")
@@ -122,10 +127,19 @@ func verifyCredentialDoc(doc map[string]interface{}, now time.Time, pinned ed255
 	if err != nil {
 		return res, fmt.Errorf("attestix: decode proofValue: %w", err)
 	}
+	if len(pub) != ed25519.PublicKeySize {
+		return res, fmt.Errorf("attestix: issuer key must be 32 bytes")
+	}
 	res.SignatureValid = ed25519.Verify(pub, canon, sig)
 
 	// Expiry: now < expirationDate.
-	if expStr, ok := doc["expirationDate"].(string); ok && expStr != "" {
+	if rawExpiry, present := doc["expirationDate"]; present {
+		expStr, ok := rawExpiry.(string)
+		if !ok || expStr == "" {
+			res.NotExpired = false
+			return res, fmt.Errorf("attestix: invalid expirationDate")
+		}
+		res.NotExpired = false
 		exp, err := parseTime(expStr)
 		if err != nil {
 			return res, fmt.Errorf("attestix: parse expirationDate: %w", err)
@@ -144,27 +158,23 @@ func verifyCredentialDoc(doc map[string]interface{}, now time.Time, pinned ed255
 }
 
 func resolveIssuerKey(doc, proof map[string]interface{}) (ed25519.PublicKey, error) {
-	// Prefer proof.verificationMethod, fall back to issuer.id.
-	if vm, ok := proof["verificationMethod"].(string); ok && vm != "" {
-		did := vm
-		if i := strings.IndexByte(vm, '#'); i >= 0 {
-			did = vm[:i]
-		}
-		if strings.HasPrefix(did, "did:key:") {
-			return DecodeDidKey(did)
-		}
-	}
+	var did string
 	switch iss := doc["issuer"].(type) {
 	case string:
-		if strings.HasPrefix(iss, "did:key:") {
-			return DecodeDidKey(iss)
-		}
+		did = iss
 	case map[string]interface{}:
-		if id, ok := iss["id"].(string); ok && strings.HasPrefix(id, "did:key:") {
-			return DecodeDidKey(id)
+		did, _ = iss["id"].(string)
+	}
+	if !strings.HasPrefix(did, "did:key:") {
+		return nil, fmt.Errorf("attestix: could not resolve issuer did:key")
+	}
+	if raw, present := proof["verificationMethod"]; present {
+		vm, ok := raw.(string)
+		if !ok || vm == "" || strings.SplitN(vm, "#", 2)[0] != did {
+			return nil, fmt.Errorf("attestix: verificationMethod does not match issuer")
 		}
 	}
-	return nil, fmt.Errorf("attestix: could not resolve issuer did:key")
+	return DecodeDidKey(did)
 }
 
 // decodeBase64urlPadded decodes base64url that may or may not carry padding.
