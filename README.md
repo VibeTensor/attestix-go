@@ -126,6 +126,12 @@ regressions are in [security_boundaries_test.go](security_boundaries_test.go).
 Vector compatibility is evidence for the represented cases, not a blanket
 claim for every JSON value or every verifier implementation.
 
+## Support
+
+Support ongoing project maintenance through GitHub Sponsors.
+
+<a href="https://github.com/sponsors/VibeTensor"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ea4aaa?style=flat-square&logo=github" alt="GitHub Sponsors" /></a>
+
 ## License
 
 [Apache-2.0](LICENSE).
